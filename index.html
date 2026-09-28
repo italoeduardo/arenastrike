@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>ArenaStrike</title>
-<meta name="description" content="FPS tático multiplayer que roda direto no navegador. Crie uma sala, mande o link e jogue." />
+<meta name="description" content="FPS tático multiplayer que roda direto no navegador. Modo competitivo com bomba, economia e rounds." />
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -20,17 +20,42 @@
 
       <div class="row2">
         <div class="field">
-          <label for="botCount">Bots</label>
-          <select id="botCount">
-            <option value="0">Nenhum</option>
-            <option value="2">2</option>
-            <option value="4" selected>4</option>
-            <option value="6">6</option>
-            <option value="8">8</option>
+          <label for="modeSelect">Modo</label>
+          <select id="modeSelect">
+            <option value="comp" selected>Competitivo (bomba)</option>
+            <option value="dm">Mata-mata</option>
           </select>
         </div>
         <div class="field">
-          <label for="difficulty">Dificuldade</label>
+          <label for="mapSelect">Mapa</label>
+          <select id="mapSelect">
+            <option value="oasis" selected>Oásis</option>
+            <option value="arena">Arena</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row3">
+        <div class="field">
+          <label for="teamSelect">Time</label>
+          <select id="teamSelect">
+            <option value="auto" selected>Automático</option>
+            <option value="T">Terroristas</option>
+            <option value="CT">Contra-Terroristas</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="botCount">Bots</label>
+          <select id="botCount">
+            <option value="0">Nenhum</option>
+            <option value="3">3</option>
+            <option value="5">5</option>
+            <option value="7">7</option>
+            <option value="9" selected>9 (5x5)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="difficulty">Nível</label>
           <select id="difficulty">
             <option value="easy">Fácil</option>
             <option value="normal" selected>Normal</option>
@@ -61,7 +86,7 @@
 
       <div class="divider">ou</div>
 
-      <button id="offlineBtn" class="secondaryBtn">Treinar offline vs bots</button>
+      <button id="offlineBtn" class="secondaryBtn">Jogar offline vs bots</button>
 
       <details class="controls">
         <summary>Controles</summary>
@@ -73,10 +98,13 @@
           <span>Ctrl / C</span><span>agachar</span>
           <span>Shift</span><span>andar em silêncio</span>
           <span>R</span><span>recarregar</span>
-          <span>1 / 2 / 3</span><span>primária / pistola / faca</span>
-          <span>B</span><span>escolher arma</span>
+          <span>1 2 3 4 5</span><span>principal / pistola / faca / granadas / bomba</span>
+          <span>Q</span><span>última arma</span>
+          <span>B</span><span>menu de compra</span>
+          <span>E</span><span>desarmar bomba / pegar arma</span>
+          <span>G</span><span>largar arma ou bomba</span>
           <span>Tab</span><span>placar</span>
-          <span>Esc</span><span>pausa / sensibilidade</span>
+          <span>Esc</span><span>pausa / opções</span>
         </div>
       </details>
       <p class="mobileWarn">Precisa de teclado e mouse — não funciona no celular.</p>
@@ -90,24 +118,42 @@
     <div id="scope" class="hidden"><div class="lens"></div></div>
     <div id="damageDir"></div>
 
-    <div id="topBar"><span id="matchTimer">10:00</span><span id="fragInfo"></span></div>
+    <div id="radarBox"><canvas id="radar" width="200" height="200"></canvas><div id="roomTag"></div></div>
+
+    <div id="topBar">
+      <div class="teamScore t"><span id="aliveT" class="pips"></span><b id="scoreT">0</b></div>
+      <div class="clock"><span id="matchTimer">0:00</span><span id="phaseLabel"></span></div>
+      <div class="teamScore ct"><b id="scoreCT">0</b><span id="aliveCT" class="pips"></span></div>
+    </div>
+    <div id="fragInfo"></div>
     <div id="killFeed"></div>
-    <div id="roomTag"></div>
 
     <div id="bottomLeft">
-      <div id="hpBox"><span class="icon">+</span><span id="hpText">100</span></div>
+      <div id="moneyBox"><span id="moneyText">$800</span><span id="moneyPop"></span><span id="buyIcon" class="hidden">COMPRA [B]</span></div>
+      <div class="vitals">
+        <div id="hpBox"><span class="icon">+</span><span id="hpText">100</span></div>
+        <div id="armorBox"><span class="icon" id="armorIcon">◈</span><span id="armorText">0</span></div>
+      </div>
     </div>
     <div id="bottomRight">
+      <div id="invIcons"></div>
       <div id="weaponName">AR-7</div>
       <div id="ammoBox"><span id="ammoMag">30</span><span id="ammoRes">/ 90</span></div>
     </div>
+    <div id="bombCarry" class="hidden">VOCÊ ESTÁ COM A BOMBA</div>
+    <div id="progress" class="hidden"><div id="progressLabel"></div><div class="bar"><div id="progressFill"></div></div></div>
+    <div id="hint"></div>
     <div id="reloadHint" class="hidden">R para recarregar</div>
     <div id="toast"></div>
+    <div id="banner" class="hidden"><div id="bannerTitle"></div><div id="bannerSub"></div></div>
+    <div id="spectating" class="hidden"></div>
+    <div id="freeMouse" class="hidden">Mouse livre: seu navegador bloqueou a trava do mouse. Clique na tela pra tentar travar de novo.</div>
   </div>
+  <div id="flashOverlay"></div>
 
   <div id="scoreboard" class="hidden">
-    <h2>Placar</h2>
-    <table><thead><tr><th>Jogador</th><th>Abates</th><th>Mortes</th><th>Ping</th></tr></thead><tbody id="scoreBody"></tbody></table>
+    <div id="sbHeader"></div>
+    <div id="sbTables"></div>
   </div>
 
   <div id="deathScreen" class="hidden">
@@ -117,15 +163,15 @@
   </div>
 
   <div id="buyMenu" class="hidden">
-    <h2>Escolha sua arma principal</h2>
+    <div class="buyTop"><h2>Comprar</h2><span id="buyMoney"></span><span id="buyTimer"></span></div>
     <div id="buyGrid"></div>
-    <p class="buyHint">Tecla <b>B</b> fecha. A troca vale na hora nos primeiros segundos após nascer, senão no próximo respawn.</p>
+    <p class="buyHint">Clique pra comprar. <b>B</b> ou <b>Esc</b> fecha.</p>
   </div>
 
   <div id="pauseMenu" class="hidden">
     <div class="pauseBox">
       <h2>Pausado</h2>
-      <p id="pauseNote" class="pauseNote">No online o jogo continua rolando.</p>
+      <p id="pauseNote" class="pauseNote"></p>
       <label for="sensInput">Sensibilidade do mouse <b id="sensVal"></b></label>
       <input type="range" id="sensInput" min="0.3" max="5" step="0.05" />
       <label for="volInput">Volume <b id="volVal"></b></label>
@@ -136,6 +182,7 @@
         <label>Link da sala</label>
         <div class="linkRow"><input id="pauseLink" readonly /><button id="pauseCopyBtn">Copiar</button></div>
       </div>
+      <button id="startMatchBtn" class="secondaryBtn hidden">Encerrar aquecimento e começar</button>
       <button id="resumeBtn" class="primaryBtn">Voltar pro jogo</button>
       <button id="quitBtn" class="secondaryBtn">Sair pro menu</button>
     </div>

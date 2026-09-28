@@ -8,7 +8,6 @@ const GRAVITY = 20;
 const JUMP_V = 6.6;
 export const RUN_SPEED = 6.2, WALK_SPEED = 3.0, CROUCH_SPEED = 2.4;
 const GROUND_ACCEL = 60, AIR_ACCEL = 12, FRICTION = 9;
-const BOUND = 39.5;
 
 // Shared movement physics for the local player and bots.
 export class Body {
@@ -127,9 +126,6 @@ export class Body {
       }
       if (top > -Infinity) { this.pos.y = top; this.onGround = true; this.vel.y = 0; }
     }
-
-    this.pos.x = Math.max(-BOUND, Math.min(BOUND, this.pos.x));
-    this.pos.z = Math.max(-BOUND, Math.min(BOUND, this.pos.z));
   }
 }
 
@@ -145,20 +141,27 @@ export class Player extends Body {
     addEventListener('keydown', e => { this.keys.add(e.code); if (e.code === 'Space' || e.code === 'Tab') e.preventDefault(); });
     addEventListener('keyup', e => this.keys.delete(e.code));
     addEventListener('blur', () => this.keys.clear());
-    addEventListener('mousemove', e => {
-      if (document.pointerLockElement !== document.body || !this.alive) return;
-      this.yaw -= e.movementX * this.sensitivity * this.zoomSens;
-      this.pitch -= e.movementY * this.sensitivity * this.zoomSens;
-      this.pitch = Math.max(-1.55, Math.min(1.55, this.pitch));
-    });
+    this.lookEnabled = false;
     this.zoomSens = 1;
+    addEventListener('mousemove', e => {
+      if (!this.lookEnabled || !this.alive) return;
+      this.look(e.movementX, e.movementY);
+    });
+  }
+
+  look(dx, dy) {
+    this.yaw -= dx * this.sensitivity * this.zoomSens;
+    this.pitch -= dy * this.sensitivity * this.zoomSens;
+    this.pitch = Math.max(-1.55, Math.min(1.55, this.pitch));
   }
 
   get quiet() { return this.keys.has('ShiftLeft') || this.crouch > 0.5; }
 
-  update(dt, inputEnabled) {
+  // frozen: can look and crouch but not walk or jump (buy time, planting, defusing)
+  update(dt, inputEnabled, frozen = false) {
     if (!this.alive) return;
-    const k = inputEnabled ? this.keys : new Set();
+    const k = inputEnabled ? new Set(this.keys) : new Set();
+    if (frozen) for (const c of ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space']) k.delete(c);
     const fwd = (k.has('KeyW') ? 1 : 0) - (k.has('KeyS') ? 1 : 0);
     const side = (k.has('KeyD') ? 1 : 0) - (k.has('KeyA') ? 1 : 0);
     const wish = new THREE.Vector3();

@@ -63,10 +63,27 @@ export function playShot(kind = 'rifle', volume = 1, pan) {
   if (kind === 'pistol') {
     noiseBurst(d, 0.12, 2400, 0.8);
     tone(d, 180, 0.08, 'triangle', 60);
+  } else if (kind === 'deagle') {
+    noiseBurst(d, 0.3, 1100, 0.6);
+    tone(d, 120, 0.18, 'square', 40);
+  } else if (kind === 'smg') {
+    noiseBurst(d, 0.1, 2000, 0.9);
+    tone(d, 200, 0.06, 'square', 80);
+  } else if (kind === 'shotgun') {
+    noiseBurst(d, 0.4, 700, 0.5);
+    noiseBurst(d, 0.15, 2500, 0.8);
+    tone(d, 90, 0.25, 'sawtooth', 30);
+  } else if (kind === 'scout') {
+    noiseBurst(d, 0.3, 1500, 0.6);
+    tone(d, 160, 0.2, 'sawtooth', 50);
   } else if (kind === 'sniper') {
     noiseBurst(d, 0.45, 900, 0.5);
     noiseBurst(d, 0.2, 3500, 1);
     tone(d, 110, 0.3, 'sawtooth', 35);
+  } else if (kind === 'rifleS') {
+    noiseBurst(d, 0.14, 1800, 0.8);
+    noiseBurst(d, 0.06, 5000, 1.4);
+    tone(d, 160, 0.1, 'square', 55);
   } else {
     noiseBurst(d, 0.18, 1400, 0.7);
     noiseBurst(d, 0.08, 4200, 1.2);
@@ -111,6 +128,83 @@ export function playKill() {
   const d = out(0.3);
   tone(d, 660, 0.1, 'square');
   setTimeout(() => ctx && tone(out(0.3), 990, 0.15, 'square'), 90);
+}
+
+export function playSwish() {
+  if (!ctx) return;
+  noiseBurst(out(0.2), 0.15, 1800, 2, 0.04);
+}
+
+export function playBombBeep(volume = 0.35, pan) {
+  if (!ctx) return;
+  tone(out(volume, pan), 2600, 0.09, 'sine');
+}
+
+export function playKeypad() {
+  if (!ctx) return;
+  tone(out(0.2), 1200 + Math.random() * 800, 0.06, 'square');
+}
+
+export function playDefuse(volume = 0.3, pan) {
+  if (!ctx) return;
+  noiseBurst(out(volume, pan), 0.2, 4000, 3, 0.02);
+}
+
+export function playExplosion(volume = 1, pan) {
+  if (!ctx) return;
+  const d = out(volume, pan);
+  noiseBurst(d, 2.2, 180, 0.4, 0.01);
+  noiseBurst(d, 0.8, 600, 0.5, 0.01);
+  tone(d, 60, 1.5, 'sawtooth', 20);
+}
+
+export function playGrenade(kind, volume = 1, pan) {
+  if (!ctx) return;
+  const d = out(volume, pan);
+  if (kind === 'he') { noiseBurst(d, 1.0, 300, 0.5, 0.005); tone(d, 70, 0.6, 'sawtooth', 25); }
+  else if (kind === 'flash') { noiseBurst(d, 0.25, 3000, 0.8, 0.002); }
+  else noiseBurst(d, 1.5, 5000, 0.4, 0.2);
+}
+
+export function playBounce(volume = 0.3, pan) {
+  if (!ctx) return;
+  tone(out(volume, pan), 900 + Math.random() * 300, 0.04, 'triangle');
+}
+
+let ringNode = null;
+export function playFlashRing(duration) {
+  if (!ctx) return;
+  if (ringNode) { try { ringNode.stop(); } catch { /* already stopped */ } }
+  const t = ctx.currentTime;
+  const o = ctx.createOscillator();
+  o.frequency.value = 3200;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.25, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + duration);
+  o.connect(g); g.connect(master);
+  o.start(t); o.stop(t + duration + 0.05);
+  ringNode = o;
+}
+
+export function playRoundStart() {
+  if (!ctx) return;
+  const d = out(0.25);
+  tone(d, 523, 0.12, 'triangle');
+  setTimeout(() => ctx && tone(out(0.25), 784, 0.2, 'triangle'), 130);
+}
+
+export function announce(text) {
+  try {
+    if (!('speechSynthesis' in window) || volume <= 0) return;
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'pt-BR';
+    u.rate = 1.05;
+    u.volume = Math.min(1, volume * 1.6);
+    const v = speechSynthesis.getVoices().find(v => v.lang && v.lang.toLowerCase().startsWith('pt'));
+    if (v) u.voice = v;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+  } catch { /* speech not available */ }
 }
 
 export function playBuy() {
