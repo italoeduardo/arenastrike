@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ArenaStrike</title>
+<meta name="description" content="FPS tático multiplayer que roda direto no navegador. Crie uma sala, mande o link e jogue." />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="menu">
+    <div id="menuBox">
+      <h1>ARENA<span>STRIKE</span></h1>
+      <p class="subtitle">FPS tático multiplayer no navegador</p>
+
+      <div class="field">
+        <label for="nickInput">Seu nick</label>
+        <input id="nickInput" maxlength="16" placeholder="Jogador" autocomplete="off" />
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label for="botCount">Bots</label>
+          <select id="botCount">
+            <option value="0">Nenhum</option>
+            <option value="2">2</option>
+            <option value="4" selected>4</option>
+            <option value="6">6</option>
+            <option value="8">8</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="difficulty">Dificuldade</label>
+          <select id="difficulty">
+            <option value="easy">Fácil</option>
+            <option value="normal" selected>Normal</option>
+            <option value="hard">Difícil</option>
+          </select>
+        </div>
+      </div>
+
+      <button id="hostBtn" class="primaryBtn">Criar sala online</button>
+      <div id="hostInfo" class="hidden">
+        <p>Mande esse link pros amigos:</p>
+        <div class="linkRow">
+          <input id="roomLink" readonly />
+          <button id="copyLinkBtn">Copiar</button>
+        </div>
+        <button id="startHostBtn" class="primaryBtn">Entrar no jogo</button>
+      </div>
+      <p id="hostStatus" class="status"></p>
+
+      <div class="divider">ou</div>
+
+      <label for="roomCodeInput">Entrar numa sala</label>
+      <div class="linkRow">
+        <input id="roomCodeInput" placeholder="Código (ex: K7PQ2M)" autocomplete="off" maxlength="40" />
+        <button id="joinBtn">Entrar</button>
+      </div>
+      <p id="joinStatus" class="status"></p>
+
+      <div class="divider">ou</div>
+
+      <button id="offlineBtn" class="secondaryBtn">Treinar offline vs bots</button>
+
+      <details class="controls">
+        <summary>Controles</summary>
+        <div class="controlsGrid">
+          <span>WASD</span><span>mover</span>
+          <span>Mouse</span><span>mirar / atirar</span>
+          <span>Botão direito</span><span>mira da sniper</span>
+          <span>Espaço</span><span>pular</span>
+          <span>Ctrl / C</span><span>agachar</span>
+          <span>Shift</span><span>andar em silêncio</span>
+          <span>R</span><span>recarregar</span>
+          <span>1 / 2 / 3</span><span>primária / pistola / faca</span>
+          <span>B</span><span>escolher arma</span>
+          <span>Tab</span><span>placar</span>
+          <span>Esc</span><span>pausa / sensibilidade</span>
+        </div>
+      </details>
+      <p class="mobileWarn">Precisa de teclado e mouse — não funciona no celular.</p>
+      <a class="repoLink" href="https://github.com/italoeduardo/arenastrike" target="_blank" rel="noopener">Código aberto no GitHub</a>
+    </div>
+  </div>
+
+  <div id="hud" class="hidden">
+    <div id="crosshair"><i class="ch t"></i><i class="ch b"></i><i class="ch l"></i><i class="ch r"></i><i class="dot"></i></div>
+    <div id="hitMarker"><i></i><i></i><i></i><i></i></div>
+    <div id="scope" class="hidden"><div class="lens"></div></div>
+    <div id="damageDir"></div>
+
+    <div id="topBar"><span id="matchTimer">10:00</span><span id="fragInfo"></span></div>
+    <div id="killFeed"></div>
+    <div id="roomTag"></div>
+
+    <div id="bottomLeft">
+      <div id="hpBox"><span class="icon">+</span><span id="hpText">100</span></div>
+    </div>
+    <div id="bottomRight">
+      <div id="weaponName">AR-7</div>
+      <div id="ammoBox"><span id="ammoMag">30</span><span id="ammoRes">/ 90</span></div>
+    </div>
+    <div id="reloadHint" class="hidden">R para recarregar</div>
+    <div id="toast"></div>
+  </div>
+
+  <div id="scoreboard" class="hidden">
+    <h2>Placar</h2>
+    <table><thead><tr><th>Jogador</th><th>Abates</th><th>Mortes</th><th>Ping</th></tr></thead><tbody id="scoreBody"></tbody></table>
+  </div>
+
+  <div id="deathScreen" class="hidden">
+    <div class="deathTitle">Você morreu</div>
+    <div id="deathBy"></div>
+    <div id="respawnIn"></div>
+  </div>
+
+  <div id="buyMenu" class="hidden">
+    <h2>Escolha sua arma principal</h2>
+    <div id="buyGrid"></div>
+    <p class="buyHint">Tecla <b>B</b> fecha. A troca vale na hora nos primeiros segundos após nascer, senão no próximo respawn.</p>
+  </div>
+
+  <div id="pauseMenu" class="hidden">
+    <div class="pauseBox">
+      <h2>Pausado</h2>
+      <p id="pauseNote" class="pauseNote">No online o jogo continua rolando.</p>
+      <label for="sensInput">Sensibilidade do mouse <b id="sensVal"></b></label>
+      <input type="range" id="sensInput" min="0.3" max="5" step="0.05" />
+      <label for="volInput">Volume <b id="volVal"></b></label>
+      <input type="range" id="volInput" min="0" max="1" step="0.05" />
+      <label for="fovInput">Campo de visão <b id="fovVal"></b></label>
+      <input type="range" id="fovInput" min="60" max="110" step="1" />
+      <div id="pauseInvite" class="hidden">
+        <label>Link da sala</label>
+        <div class="linkRow"><input id="pauseLink" readonly /><button id="pauseCopyBtn">Copiar</button></div>
+      </div>
+      <button id="resumeBtn" class="primaryBtn">Voltar pro jogo</button>
+      <button id="quitBtn" class="secondaryBtn">Sair pro menu</button>
+    </div>
+  </div>
+
+  <div id="matchEnd" class="hidden">
+    <div class="endTitle">Fim da partida</div>
+    <div id="endWinner"></div>
+    <div id="endNext"></div>
+  </div>
+
+  <canvas id="gameCanvas"></canvas>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+    }
+  }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
