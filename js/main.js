@@ -714,8 +714,11 @@ document.addEventListener('pointerlockchange', () => {
   }
 });
 
-canvas.addEventListener('mousedown', e => {
+// With pointer lock active the browser sends mouse events to the locked element (body), not the canvas,
+// so listen on the whole document and ignore clicks that land on menus and buttons.
+document.addEventListener('mousedown', e => {
   if (!game.inGame) return;
+  if (!locked() && e.target !== canvas) return;
   if (!locked()) lockPointer();
   if (!locked() && !freeMouse) return;
   if (!inputActive()) return;
